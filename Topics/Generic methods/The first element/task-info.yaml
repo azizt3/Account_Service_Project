@@ -1,0 +1,23 @@
+type: code
+files:
+  - name: src/Main.java
+    visible: true
+    highlight_level: NONE
+    text: |-
+      // do not remove imports
+      import java.util.ArrayList;
+      import java.util.List;
+      import java.util.Scanner;
+      import java.util.function.Function;
+      
+      class ArrayUtils {
+          // define getFirst method here
+      }
+    learner_created: false
+feedback_link: https://hyperskill.org/learn/step/11022#comment
+status: Solved
+feedback:
+  message: <html>Correct solution</html>
+  time: "Sun, 03 Mar 2024 17:18:34 UTC"
+record: -1
+submission_language: java17
