@@ -33,26 +33,15 @@ public class PaymentController {
         @RequestParam(required = false) @Pattern(regexp = "(0[1-9]|1[1,2])-(19|20)\\d{2}") Optional<String> period,
         @AuthenticationPrincipal UserAdapter user) throws ParseException {
 
-        if (period.isPresent()) {
-            PaymentDto payment = paymentService.handleGetPayment(period.get(), user);
-            return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(payment);
+        if (period.isPresent()){
+            return paymentService.handleGetPayment(period.get(), user);
         }
-
-        PaymentDto[] payments = paymentService.handleGetAllPayments(user);
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(payments);
+        return paymentService.handleGetAllPayments(user);
     }
 
     @PutMapping(path = "/api/acct/payments")
     public ResponseEntity<?> updatePayments(@RequestBody PaymentAddRequest payment) {
-        paymentService.validatePaymentUpdate(payment);
-        paymentService.updatePayment(payment);
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(new PaymentPostedDto("Updated successfully!"));
+        return paymentService.updatePayment(payment);
     }
 
     @PostMapping(path = "/api/acct/payments")
@@ -60,13 +49,9 @@ public class PaymentController {
         @NotEmpty(message = "Payments cannot be empty") @RequestBody List<@Valid PaymentAddRequest> payments) {
             payments.forEach(paymentService::validatePaymentAdd);
             payments.forEach(paymentService::postPayment);
+
             return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body( new PaymentPostedDto("Added successfully!"));
     }
-    //Only for authenticated users
-    //Takes Period parameter
-    //if no period parameter, method returns salary for each period as an array, in descending order
-
-
 }

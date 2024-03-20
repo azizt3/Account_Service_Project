@@ -21,51 +21,25 @@ public class UserController {
     @Autowired
     UserService userService;
 
-    @PostMapping(path = "/api/auth/signup")
-    public ResponseEntity<?> signUp(@Valid @RequestBody UserRegistrationRequest newUser) {
-        userService.validateEmail(newUser.email());
-        userService.validateNewPassword(newUser.password());
-        User user = userService.register(newUser);
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(userService.buildUserDto(user));
-    }
-
     @GetMapping(path = "/api/admin/user/")
     public ResponseEntity<?> getUsers(@AuthenticationPrincipal UserAdapter user){
-        UserDto[] allUsers = userService.handleGetUsers();
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(allUsers);
+        return userService.handleGetUsers();
     }
-
+    @PostMapping(path = "/api/auth/signup")
+    public ResponseEntity<?> signUp(@Valid @RequestBody UserRegistrationRequest newUser) {
+        return userService.register(newUser);
+    }
     @PutMapping(path = "/api/admin/user/role")
-    public ResponseEntity<?> setRoles(@RequestBody RoleChangeRequest roleChangeRequest){
-        UserDto updatedUser = userService.handleRoleChange(roleChangeRequest);
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(updatedUser);
+    public ResponseEntity<?> setRoles(@RequestBody RoleChangeRequest request){
+        return userService.handleRoleChange(request);
     }
-
-    @DeleteMapping(path = "/api/admin/user/{email}")
-    public ResponseEntity<?> deleteUser(@PathVariable String email){
-        UserDeletedDto response = userService.handleUserDelete(email);
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(response);
-    }
-
     @PostMapping(path = "/api/auth/changepass")
     public ResponseEntity<?> changePass(
         @RequestBody PasswordChangeRequest newPassword, @AuthenticationPrincipal UserAdapter user) {
-
-        userService.validatePasswordUpdate(newPassword.password(), user.getPassword());
-        User updatedUser = userService.updatePassword(newPassword.password(), user);
-
-        return ResponseEntity.ok()
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(new UpdateSuccessfulDto(
-                updatedUser.getEmail(), "The password has been updated successfully")
-            );
+        return userService.updatePassword(newPassword.password(), user);
+    }
+    @DeleteMapping(path = "/api/admin/user/{email}")
+    public ResponseEntity<?> deleteUser(@PathVariable String email){
+        return userService.handleUserDelete(email);
     }
 }

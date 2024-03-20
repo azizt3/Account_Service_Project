@@ -2,6 +2,7 @@ package account.businesslayer;
 
 import account.businesslayer.exceptions.*;
 import account.businesslayer.response.CustomErrorMessage;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.h2.command.dml.Set;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
 
 @ControllerAdvice
@@ -82,6 +85,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<CustomErrorMessage> handleNotFoundException(
         NotFoundException ex, HttpStatus status, WebRequest request){
         return new ResponseEntity<>(buildErrorMessage(ex.getMessage(), request), status);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public void handleAccessDeniedException (HttpServletResponse response) throws IOException {
+        response.sendError(403, "Access Denied!");
     }
 
     private String extractValidationMessage(Exception ex) {

@@ -20,7 +20,7 @@ public class DataLoader {
         try{
             authorityRepository.save(new Authority("ROLE_ADMINISTRATOR", "ADMINISTRATIVE"));
             authorityRepository.save(new Authority("ROLE_USER", "BUSINESS_USER"));
-            authorityRepository.save(new Authority("ROLE_ACCOUNTANT ", "BUSINESS_USER"));
+            authorityRepository.save(new Authority("ROLE_ACCOUNTANT", "BUSINESS_USER"));
         } catch (Exception e) {
 
         }

@@ -1,6 +1,7 @@
 package account.businesslayer;
 
 import account.BreachedPasswords;
+import account.authority.AuthorityService;
 import account.businesslayer.dto.UpdateSuccessfulDto;
 import account.businesslayer.dto.UserAdapter;
 import account.businesslayer.dto.UserDeletedDto;
@@ -13,11 +14,12 @@ import account.businesslayer.exceptions.NotFoundException;
 import account.businesslayer.exceptions.UserExistsException;
 import account.businesslayer.request.RoleChangeRequest;
 import account.businesslayer.request.UserRegistrationRequest;
-import account.persistencelayer.AuthorityRepository;
 import account.persistencelayer.UserRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -33,98 +35,120 @@ public class UserService implements UserDetailsService {
 
     @Bean
     BCryptPasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(13); }
-
-    @Autowired
     UserRepository userRepository;
-
-    @Autowired
-    AuthorityRepository authorityRepository;
-
-    @Autowired
+    AuthorityService authorityService;
     BreachedPasswords breachedPasswords;
 
-    public UserService(UserRepository userRepository, BreachedPasswords breachedPasswords, AuthorityRepository authorityRepository) {
+    @Autowired
+    public UserService(UserRepository userRepository, BreachedPasswords breachedPasswords,
+                       AuthorityService authorityService) {
         this.userRepository = userRepository;
         this.breachedPasswords = breachedPasswords;
-        this.authorityRepository = authorityRepository;
+        this.authorityService = authorityService;
+    }
+
+    //Business Logic
+
+    public ResponseEntity<UserDto[]> handleGetUsers(){
+        if (userRepository.count() == 0) return ResponseEntity.ok().body(new UserDto[]{});
+        UserDto[] allUsers =  buildUserDtoArray(userRepository.findAll());
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(allUsers);
+    }
+
+    @Transactional
+    public ResponseEntity<UserDto> register(UserRegistrationRequest newUser) {
+        validateUniqueEmail(newUser.email());
+        validateNewPassword(newUser.password());
+        User user = buildUser(newUser);
+        userRepository.save(user);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(buildUserDto(user));
+    }
+
+    public ResponseEntity<?> handleRoleChange(RoleChangeRequest request){
+        User user = loadUser(request.user());
+        authorityService.validateRoleExists(request.role());
+        if (request.operation().equalsIgnoreCase("grant")) return handleRoleGrant(request, user);
+        if (request.operation().equalsIgnoreCase("remove")) return handleRoleRemove(request, user);
+        else throw new NotFoundException("");
+    }
+
+    private ResponseEntity<UserDto> handleRoleRemove(RoleChangeRequest request, User user) {
+        Set<Authority> currentAuthorities = user.getAuthorities();
+        authorityService.validateRoleRemoval(request, currentAuthorities);
+        Set<Authority> newAuthorities = authorityService.modifyUserAuthority(currentAuthorities, request);
+
+        user.setAuthorities(newAuthorities);
+        userRepository.save(user);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(buildUserDto(user));
+    }
+
+    private ResponseEntity<?> handleRoleGrant(RoleChangeRequest request, User user) {
+        Authority newAuthority = authorityService.getAuthoritybyRole(request.role());
+        Set<Authority> currentAuthorities = user.getAuthorities();
+        authorityService.validateNoRoleConflict(currentAuthorities, newAuthority);
+        currentAuthorities.add(newAuthority);
+        user.setAuthorities(currentAuthorities);
+        userRepository.save(user);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(buildUserDto(user));
+    }
+
+    @Transactional
+    public ResponseEntity<UpdateSuccessfulDto> updatePassword(String newPassword, UserAdapter user) {
+        validatePasswordLength(newPassword);
+        validateUniquePassword(newPassword, user.getPassword());
+        breachedPasswords.validatePasswordBreached(newPassword);
+
+        User updatedUser = loadUser(user.getEmail());
+        updatedUser.setPassword(passwordEncoder().encode(newPassword));
+        userRepository.save(updatedUser);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new UpdateSuccessfulDto(user.getEmail(), "The password has been updated successfully"));
+    }
+
+    @Transactional
+    public ResponseEntity<UserDeletedDto> handleUserDelete(String email) {
+        User user = loadUser(email);
+        if (getRoles(user).contains("ROLE_ADMINISTRATOR")) {
+            throw new InvalidChangeException("Can't remove ADMINISTRATOR role!");
+        }
+        userRepository.deleteByEmail(email);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(new UserDeletedDto(email, "Deleted successfully!"));
+    }
+
+    public User loadUser (String email) {
+        return userRepository.findByEmail(email.toLowerCase())
+                .orElseThrow(() -> new NotFoundException("User not found!"));
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = userRepository.findByEmail(email.toLowerCase())
+                .orElseThrow(() -> new UsernameNotFoundException(("")));
+        return new UserAdapter(user, getUserAuthorities(user));
+    }
+
+    private Collection<? extends GrantedAuthority> getUserAuthorities(User user) {
+        return getRoles(user).stream()
+                .map(role -> new SimpleGrantedAuthority(role))
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     //Validation Methods
 
-    @Transactional
-    public UserDeletedDto handleUserDelete(String email) {
-        User user = userRepository.findByEmail(email)
-            .orElseThrow(() -> new NotFoundException("User not found!"));
-        if (isAdmin(user)) throw new InvalidChangeException("Can't remove ADMINISTRATOR role!");
-        userRepository.deleteByEmail(email);
-        return new UserDeletedDto(email, "Deleted successfully!");
-    }
-
-    private boolean isAdmin(User user) {
-        List<String> roles = getRoles(user);
-        return roles.contains("ROLE_ADMINISTRATOR");
-    }
-
-    public UserDto handleRoleChange(RoleChangeRequest roleChangeRequest){
-        String role = "ROLE_"+roleChangeRequest.role();
-        validateUserExists(roleChangeRequest.user());
-        validateRoleExists(role);
-        User user = loadUser(roleChangeRequest.user());
-        if (roleChangeRequest.operation().equalsIgnoreCase("grant")) {
-            return handleRoleGrant(roleChangeRequest, user);
-        }
-        if (roleChangeRequest.operation().equalsIgnoreCase("remove")) {
-            return handleRoleRemove(roleChangeRequest, user);
-        }
-        else throw new NotFoundException("");
-    }
-
-    private UserDto handleRoleRemove(RoleChangeRequest roleChangeRequest, User user) {
-
-        List<String> roles = getRoles(user);
-        if (roles.size() < 2) throw new InvalidChangeException("The user must have at least one role!");
-        if (!roles.contains(roleChangeRequest.role())) {
-            throw new InvalidChangeException("The user does not have a role!");
-        }
-        if (roleChangeRequest.role().equalsIgnoreCase("ADMINISTRATOR")) {
-            throw new InvalidChangeException("Can't remove ADMINISTRATOR role!");
-        }
-
-        Set<Authority> newAuthorities= roles.stream()
-            .map(role -> authorityRepository.findByRole(role).orElseThrow())
-            .collect(Collectors.toSet());
-
-        user.setAuthorities(newAuthorities);
-        userRepository.save(user);
-        return buildUserDto(user);
-    }
-
-    private UserDto handleRoleGrant(RoleChangeRequest roleChangeRequest, User user) {
-        Authority newAuthority = authorityRepository.findByRole("ROLE_" + roleChangeRequest.role())
-            .orElseThrow();
-        Set<Authority> authorities = user.getAuthorities();
-        authorities.forEach(
-            authority -> validateNoRoleConflict(authority.getRoleGroup(), newAuthority.getRoleGroup())
-        );
-
-        authorities.add(newAuthority);
-        user.setAuthorities(authorities);
-        userRepository.save(user);
-        return buildUserDto(user);
-
-    }
-
-    public void validateNoRoleConflict(String currentGroup, String newGroup) {
-        if (currentGroup.equalsIgnoreCase(newGroup)) {
-            throw new InvalidChangeException("The user cannot combine administrative and business roles!");
-        }
-    }
-
-    public void validateRoleExists(String role) {
-        if (!authorityRepository.existsByRole(role)) throw new NotFoundException("Role not found!");
-    }
-
-    public void validateEmail(String email) {
+    public void validateUniqueEmail(String email) {
         if (userRepository.existsByEmail(email.toLowerCase())) throw new UserExistsException("User exist!");
     }
 
@@ -140,98 +164,35 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    public void validatePasswordBreached(String newPassword) {
-        int i = 0;
-        while (i < breachedPasswords.getBreachedPasswords().size()) {
-            if (passwordEncoder().matches(newPassword, breachedPasswords.getBreachedPasswords().get(i))) {
-                throw new InsufficientPasswordException("The password is in the hacker's database!");
-            } i++;
-        }
-    }
-
     public void validateNewPassword(String newPassword) {
         validatePasswordLength(newPassword);
-        validatePasswordBreached(newPassword);
+        breachedPasswords.validatePasswordBreached(newPassword);
     }
 
     void validateUserExists(String employee) {
         if (!userRepository.existsByEmail(employee.toLowerCase())){
-            throw new UsernameNotFoundException("User not found!");
+            throw new NotFoundException("User not found!");
         }
     }
-    public void validatePasswordUpdate(String newPassword, String oldPassword) {
-        validatePasswordLength(newPassword);
-        validateUniquePassword(newPassword, oldPassword);
-        validatePasswordBreached(newPassword);
-    }
 
-    //Authority Related Methods
+    //Helper Methods
 
-    public Authority getAuthoritybyRole(String role){
-        return authorityRepository.findByRole(role)
-        .orElseThrow(() -> new RuntimeException("Not found"));
-    }
-
-    public Set<Authority> setAuthority(){
-        return userRepository.count() > 0 ?
-            Set.of(getAuthoritybyRole("ROLE_USER")):Set.of(getAuthoritybyRole("ROLE_ADMINISTRATOR"));
-    }
-
-    //Business Logic
-
-
-    public User loadUser (String email) {
-        return userRepository.findByEmail(email)
-            .orElseThrow(() -> new NotFoundException("Not Found!"));
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(email.toLowerCase())
-                .orElseThrow(() -> new UsernameNotFoundException(("")));
-        return new UserAdapter(user, getUserAuthorities(user));
-    }
-
-    public UserDto[] handleGetUsers(){
-        List<UserDto> userArr = new ArrayList<>();
-        if (userRepository.count() == 0) return new UserDto[]{};
-
-        userRepository.findAll().forEach(user -> userArr.add(buildUserDto(user)));
-        List<UserDto> sortedUsers =  userArr.stream()
-            .sorted(Comparator.comparing(UserDto::id))
-            .toList();
-        return sortedUsers.toArray(new UserDto[0]);
-    }
-
-    private Collection<? extends GrantedAuthority> getUserAuthorities(User user) {
-        return getRoles(user).stream()
-            .map(role -> new SimpleGrantedAuthority(role))
-            .collect(Collectors.toCollection(ArrayList::new));
-
-        /*Set<Authority> userAuthority = user.getAuthority();
-        Collection<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new SimpleGrantedAuthority(userAuthority.getRole()));
-        return authorities;*/
-    }
-
-    private List<String> getRoles(User user) {
+    public List<String> getRoles(User user) {
         return user.getAuthorities()
             .stream()
             .map(authority -> authority.getRole())
+            .sorted()
             .toList();
     }
 
-    @Transactional
-    public User register(UserRegistrationRequest newUser) {
+    public User buildUser(UserRegistrationRequest newUser) {
         User user = new User(
                 newUser.name(),
                 newUser.lastname(),
                 newUser.email().toLowerCase(),
                 passwordEncoder().encode(newUser.password()),
-                setAuthority());
-        userRepository.save(user);
+                authorityService.setAuthority());
         return user;
-
     }
 
     public UserDto buildUserDto(User user) {
@@ -243,16 +204,11 @@ public class UserService implements UserDetailsService {
             getRoles(user).toArray(new String[0]));
     }
 
-
-    @Transactional
-    public User updatePassword(String newPassword, UserAdapter user) {
-        User updatedUser = userRepository
-            .findByEmail(user.getEmail().toLowerCase())
-            .orElseThrow(() -> new UsernameNotFoundException(""));
-        updatedUser.setPassword(passwordEncoder().encode(newPassword));
-        userRepository.save(updatedUser);
-        return updatedUser;
+    public UserDto[] buildUserDtoArray(List<User> users){
+        return users.stream()
+                .map(this::buildUserDto)
+                .sorted(Comparator.comparing(UserDto::id))
+                .toList()
+                .toArray(new UserDto[0]);
     }
-
-
 }

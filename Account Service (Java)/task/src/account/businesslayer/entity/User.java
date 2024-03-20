@@ -37,7 +37,7 @@ public class User {
     @NotBlank(message = "password is blank")
     private String password;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany(cascade = CascadeType.PERSIST, fetch = FetchType.EAGER)
     @JoinTable(
         name="user_authorities",
         joinColumns = @JoinColumn(name = "user_id"),

@@ -1,5 +1,6 @@
 package account;
 
+import account.businesslayer.exceptions.InsufficientPasswordException;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -30,6 +31,7 @@ public class BreachedPasswords {
             "PasswordForNovember",
             "PasswordForDecember"
         );
+
         this.breachedPasswords =  passwords.stream()
             .map(password -> passwordEncoder().encode(password))
             .toList();
@@ -37,5 +39,13 @@ public class BreachedPasswords {
 
     public List<String> getBreachedPasswords() {
         return breachedPasswords;
+    }
+
+    public void validatePasswordBreached (String newPassword){
+        for (String pass : breachedPasswords) {
+            if (passwordEncoder().matches(newPassword, pass)) {
+                throw new InsufficientPasswordException("The password is in the hacker's database!");
+            }
+        }
     }
 }

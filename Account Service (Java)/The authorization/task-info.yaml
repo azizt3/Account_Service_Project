@@ -2081,21 +2081,30 @@ files:
   - name: src/account/businesslayer/dto/UserDeletedDto.java
     visible: true
     learner_created: true
+  - name: src/account/businesslayer/response/AccessDeniedExceptionHandler.java
+    visible: true
+    learner_created: true
+  - name: src/account/user/UserHelper.java
+    visible: true
+    learner_created: true
+  - name: src/account/authority/AuthorityService.java
+    visible: true
+    learner_created: true
 feedback_link: https://hyperskill.org/learn/step/16605#comment
 status: Failed
 feedback:
   message: |-
-    Wrong answer in test #47
+    Wrong answer in test #74
 
-    PUT /api/admin/user/role should respond with status code 200, responded: 404
-
+    PUT /api/acct/payments should respond with status code 400, responded: 500
+    Wrong date in request body!
     Response body:
     {
-      &quot;timestamp&quot; : &quot;2024-03-11T13:46:46.295+00:00&quot;,
-      &quot;status&quot; : 404,
-      &quot;error&quot; : &quot;Not Found&quot;,
-      &quot;message&quot; : &quot;Role not found!&quot;,
-      &quot;path&quot; : &quot;/api/admin/user/role&quot;
+      &quot;timestamp&quot; : &quot;2024-03-18T21:02:25.110+00:00&quot;,
+      &quot;status&quot; : 500,
+      &quot;error&quot; : &quot;Internal Server Error&quot;,
+      &quot;message&quot; : &quot;Cannot invoke \&quot;account.businesslayer.entity.Payment.setSalary(java.lang.Long)\&quot; because \&quot;updatedPayment\&quot; is null&quot;,
+      &quot;path&quot; : &quot;/api/acct/payments&quot;
     }
-  time: "Mon, 11 Mar 2024 13:46:47 UTC"
+  time: "Mon, 18 Mar 2024 21:02:26 UTC"
 record: -1
