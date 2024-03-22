@@ -952,7 +952,7 @@ files:
       
       }
     learner_created: false
-  - name: src/account/businesslayer/dto/PaymentPostedDto.java
+  - name: src/account/payment/dto/PaymentPostedDto.java
     visible: true
     text: |
       package account.businesslayer.dto;
@@ -963,7 +963,7 @@ files:
       
       }
     learner_created: true
-  - name: src/account/businesslayer/SecurityConfig.java
+  - name: src/account/SecurityConfig.java
     visible: true
     text: |
       package account.businesslayer;
@@ -1008,7 +1008,7 @@ files:
           }
       }
     learner_created: true
-  - name: src/account/businesslayer/exceptions/UserExistsException.java
+  - name: src/account/exceptionhandler/exception/UserExistsException.java
     visible: true
     text: |
       package account.businesslayer.exceptions;
@@ -1024,7 +1024,7 @@ files:
           }
       }
     learner_created: true
-  - name: src/account/presentationlayer/PaymentController.java
+  - name: src/account/payment/PaymentController.java
     visible: true
     text: |
       package account.presentationlayer;
@@ -1100,7 +1100,7 @@ files:
       
       }
     learner_created: true
-  - name: src/account/businesslayer/exceptions/InvalidPaymentException.java
+  - name: src/account/exceptionhandler/exception/InvalidPaymentException.java
     visible: true
     text: |
       package account.businesslayer.exceptions;
@@ -1114,7 +1114,7 @@ files:
           public InvalidPaymentException(String message){super(message);}
       }
     learner_created: true
-  - name: src/account/businesslayer/exceptions/PaymentExistsException.java
+  - name: src/account/exceptionhandler/exception/PaymentExistsException.java
     visible: true
     text: |
       package account.businesslayer.exceptions;
@@ -1130,7 +1130,7 @@ files:
       
       }
     learner_created: true
-  - name: src/account/businesslayer/dto/UserDto.java
+  - name: src/account/user/dto/UserDto.java
     visible: true
     text: |
       package account.businesslayer.dto;
@@ -1141,7 +1141,7 @@ files:
           @NotBlank Long id, @NotBlank String name, @NotBlank String lastname, @NotBlank String email) {
       }
     learner_created: true
-  - name: src/account/businesslayer/exceptions/PaymentDoesNotExistException.java
+  - name: src/account/exceptionhandler/exception/PaymentDoesNotExistException.java
     visible: true
     text: |
       package account.businesslayer.exceptions;
@@ -1156,7 +1156,7 @@ files:
           }
       }
     learner_created: true
-  - name: src/account/businesslayer/dto/UserAdapter.java
+  - name: src/account/user/UserAdapter.java
     visible: true
     text: |
       package account.businesslayer;
@@ -1252,7 +1252,7 @@ files:
           }
       }
     learner_created: true
-  - name: src/account/businesslayer/RestAuthenticationEntryPoint.java
+  - name: src/account/RestAuthenticationEntryPoint.java
     visible: true
     text: |
       package account.businesslayer;
@@ -1278,7 +1278,7 @@ files:
           }
       }
     learner_created: true
-  - name: src/account/businesslayer/entity/Payment.java
+  - name: src/account/payment/Payment.java
     visible: true
     text: |
       package account.businesslayer;
@@ -1343,7 +1343,7 @@ files:
           }
       }
     learner_created: true
-  - name: src/account/businesslayer/response/CustomErrorMessage.java
+  - name: src/account/exceptionhandler/CustomErrorMessage.java
     visible: true
     text: |
       package account.businesslayer.response;
@@ -1408,7 +1408,7 @@ files:
           }
       }
     learner_created: true
-  - name: src/account/persistencelayer/PaymentRepository.java
+  - name: src/account/payment/PaymentRepository.java
     visible: true
     text: |+
       package account.persistencelayer;
@@ -1473,7 +1473,7 @@ files:
           }
       }
     learner_created: true
-  - name: src/account/businesslayer/entity/User.java
+  - name: src/account/user/User.java
     visible: true
     text: |
       package account.businesslayer;
@@ -1559,7 +1559,7 @@ files:
           }
       }
     learner_created: true
-  - name: src/account/persistencelayer/UserRepository.java
+  - name: src/account/user/UserRepository.java
     visible: true
     text: |
       package account.persistencelayer;
@@ -1576,7 +1576,7 @@ files:
         Optional<User> findByEmail(String email);
       }
     learner_created: true
-  - name: src/account/businesslayer/dto/PaymentDto.java
+  - name: src/account/payment/dto/PaymentDto.java
     visible: true
     text: |
       package account.businesslayer.dto;
@@ -1586,7 +1586,7 @@ files:
       public record PaymentDto( String name, String lastname, String period,  String salary) {
       }
     learner_created: true
-  - name: src/account/businesslayer/dto/UpdateSuccessfulDto.java
+  - name: src/account/payment/dto/UpdateSuccessfulDto.java
     visible: true
     text: |
       package account.businesslayer.dto;
@@ -1596,7 +1596,7 @@ files:
       public record PasswordUpdateDto(@NotBlank String email, String status) {
       }
     learner_created: true
-  - name: src/account/businesslayer/exceptions/InsufficientPasswordException.java
+  - name: src/account/exceptionhandler/exception/InsufficientPasswordException.java
     visible: true
     text: |
       package account.businesslayer.exceptions;
@@ -1612,7 +1612,7 @@ files:
           }
       }
     learner_created: true
-  - name: src/account/businesslayer/request/PaymentAddRequest.java
+  - name: src/account/payment/request/PaymentAddRequest.java
     visible: true
     text: |
       package account.businesslayer.request;
@@ -1632,7 +1632,7 @@ files:
           @Positive(message = "Salary cannot be negative!")
           Long salary){}
     learner_created: true
-  - name: src/account/businesslayer/request/PasswordChangeRequest.java
+  - name: src/account/user/request/PasswordChangeRequest.java
     visible: true
     text: |
       package account.businesslayer.request;
@@ -1644,7 +1644,7 @@ files:
           @NotBlank(message = "password is blank") @JsonProperty("new_password") String password) {
       }
     learner_created: true
-  - name: src/account/businesslayer/PaymentService.java
+  - name: src/account/payment/PaymentService.java
     visible: true
     text: |
       package account.businesslayer;
@@ -1777,7 +1777,7 @@ files:
           }
       }
     learner_created: true
-  - name: src/account/presentationlayer/UserController.java
+  - name: src/account/user/UserController.java
     visible: true
     text: |
       package account.presentationlayer;
@@ -1841,7 +1841,7 @@ files:
       
       }
     learner_created: true
-  - name: src/account/businesslayer/UserService.java
+  - name: src/account/user/UserService.java
     visible: true
     text: |
       package account.businesslayer;
@@ -1951,7 +1951,7 @@ files:
           }
       }
     learner_created: true
-  - name: src/account/businesslayer/request/UserRegistrationRequest.java
+  - name: src/account/user/request/UserRegistrationRequest.java
     visible: true
     text: |
       package account.businesslayer.request;
@@ -1967,7 +1967,7 @@ files:
           @NotBlank String password) {
       }
     learner_created: true
-  - name: src/account/businesslayer/GlobalExceptionHandler.java
+  - name: src/account/exceptionhandler/GlobalExceptionHandler.java
     visible: true
     text: |
       package account.businesslayer;
@@ -2057,31 +2057,31 @@ files:
       
       }
     learner_created: true
-  - name: src/account/businesslayer/entity/Authority.java
+  - name: src/account/authority/Authority.java
     visible: true
     learner_created: true
-  - name: src/account/businesslayer/DataLoader.java
+  - name: src/account/DataLoader.java
     visible: true
     learner_created: true
-  - name: src/account/persistencelayer/AuthorityRepository.java
+  - name: src/account/authority/AuthorityRepository.java
     visible: true
     learner_created: true
-  - name: src/account/businesslayer/exceptions/AuthorizationViolationException.java
+  - name: src/account/exceptionhandler/exception/AuthorizationViolationException.java
     visible: true
     learner_created: true
-  - name: src/account/businesslayer/request/RoleChangeRequest.java
+  - name: src/account/authority/request/RoleChangeRequest.java
     visible: true
     learner_created: true
-  - name: src/account/businesslayer/exceptions/NotFoundException.java
+  - name: src/account/exceptionhandler/exception/NotFoundException.java
     visible: true
     learner_created: true
-  - name: src/account/businesslayer/exceptions/InvalidChangeException.java
+  - name: src/account/exceptionhandler/exception/InvalidChangeException.java
     visible: true
     learner_created: true
-  - name: src/account/businesslayer/dto/UserDeletedDto.java
+  - name: src/account/user/dto/UserDeletedDto.java
     visible: true
     learner_created: true
-  - name: src/account/businesslayer/response/AccessDeniedExceptionHandler.java
+  - name: src/account/exceptionhandler/exception/AccessDeniedExceptionHandler.java
     visible: true
     learner_created: true
   - name: src/account/user/UserHelper.java

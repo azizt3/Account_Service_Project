@@ -1,7 +1,6 @@
 package account;
 
-import account.businesslayer.exceptions.InsufficientPasswordException;
-import org.springframework.context.annotation.Bean;
+import account.exceptionhandler.exception.InsufficientPasswordException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
